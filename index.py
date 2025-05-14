@@ -11,7 +11,7 @@ st.title("🤖 AI Coding Agent")
 
 @st.cache_resource
 def load_model():
-    model_name = "meta-llama/Meta-Llama-4-8B"
+    model_name = "meta-llama/Llama-4-Maverick-17B-128E-Instruct"
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16, device_map="auto")
     return model, tokenizer
