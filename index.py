@@ -4,6 +4,8 @@ import re
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
 import streamlit as st
+import os
+os.environ["STREAMLIT_WATCHER_TYPE"] = "none"
 
 # === Load LLaMA 4 ===
 st.set_page_config(page_title="AI Coding Agent", layout="wide")
@@ -11,8 +13,8 @@ st.title("🤖 AI Coding Agent")
 
 @st.cache_resource
 def load_model():
-    model_name = "meta-llama/Llama-4-Maverick-17B-128E-Instruct"
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model_name = "deepseek-ai/deepseek-coder-6.7b-instruct"
+    tokenizer = AutoTokenizer.from_pretrained(model_name,trust_remote_code=True,local_files_only=False)
     model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16, device_map="auto")
     return model, tokenizer
 
