@@ -28,7 +28,12 @@ def chat(prompt):
         exit("No GPU available")
     inputs = tokenizer(prompt, return_tensors="pt").to("cuda" if torch.cuda.is_available() else "cpu")
     outputs = model.generate(
-        **inputs, max_new_tokens=1024, do_sample=True, temperature=0.3
+        **inputs,
+        max_new_tokens=1024,
+        temperature=0.3,
+        do_sample=False,
+        top_p=0.95,
+        repetition_penalty=1.2
     )
     return tokenizer.decode(outputs[0], skip_special_tokens=True)
 
@@ -81,7 +86,10 @@ SYSTEM:
 You are an autonomous coding agent. You can write files, run shell commands, and build software projects.
 Respond strictly using ACTION blocks.
 Avoid summarizing or skipping steps. Your job is to build everything needed, including full file contents.
-
+Important:
+- DO NOT escape HTML tags. Use raw HTML with < and >.
+- DO NOT repeat characters or special entities like &lt; or &gt;.
+- DO NOT use placeholder names like filename.ext.
 
 WARNING: DO NOT use "filename.ext" literally. Replace it with the actual name of the file (e.g., "index.html", "main.py").
 
@@ -171,8 +179,9 @@ if st.session_state["generated"]:
 
         # Preview
         if language == "html":
+            from html import unescape
             st.markdown("### 🔍 Live Preview")
-            st.components.v1.html(edited_code, height=500, scrolling=True)
+            st.components.v1.html(unescape(edited_code), height=500, scrolling=True)
         elif language == "markdown":
             st.markdown("### 🔍 Live Preview")
             st.markdown(edited_code, unsafe_allow_html=True)
