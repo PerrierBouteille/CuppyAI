@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cuppy AI Chat</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            jetbrains: {
+              dark: '#1E1E1E',
+              darker: '#181818',
+              darkest: '#121212',
+              primary: '#4D6BFF',
+              secondary: '#6897BB',
+              accent: '#FF6B6B',
+              text: '#A9B7C6',
+              lighttext: '#D4D4D4',
+              border: '#3C3F41',
+              highlight: '#2B2B2B',
+              neon: '#4DFFDF',
+              wave: '#4D6BFF',
+            }
+          },
+          animation: {
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'wave': 'wave 8s ease-in-out infinite',
+            'float': 'float 6s ease-in-out infinite',
+          },
+          keyframes: {
+            wave: {
+              '0%, 100%': { 'background-position': '0% 50%' },
+              '50%': { 'background-position': '100% 50%' },
+            },
+            float: {
+              '0%, 100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-10px)' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
+    
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      color: #A9B7C6;
+      overflow: hidden;
+    }
+    
+    .gradient-bg {
+      background: linear-gradient(-45deg, #1E1E1E, #181818, #121212, #1E1E1E);
+      background-size: 400% 400%;
+      animation: wave 15s ease infinite;
+    }
+    
+    .neon-text {
+      text-shadow: 0 0 5px rgba(77, 255, 223, 0.5);
+    }
+    
+    .neon-border {
+      box-shadow: 0 0 10px rgba(77, 255, 223, 0.3);
+    }
+    
+    .neon-glow {
+      box-shadow: 0 0 15px rgba(77, 255, 223, 0.4);
+    }
+    
+    .chat-message-user {
+      background: linear-gradient(135deg, #4D6BFF 0%, #4D8BFF 100%);
+      color: white;
+      border-radius: 8px 8px 0 8px;
+      box-shadow: 0 4px 6px rgba(77, 107, 255, 0.2);
+    }
+    
+    .chat-message-ai {
+      background: linear-gradient(135deg, #2B2B2B 0%, #1E1E1E 100%);
+      color: #D4D4D4;
+      border-radius: 8px 8px 8px 0;
+      border: 1px solid rgba(77, 107, 255, 0.2);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .chat-list-item.active {
+      background: linear-gradient(90deg, rgba(77, 107, 255, 0.1) 0%, rgba(77, 107, 255, 0.05) 100%);
+      border-left: 3px solid #4D6BFF;
+    }
+    
+    .typing-indicator span {
+      animation: bounce 1.5s infinite ease-in-out;
+      color: #4DFFDF;
+    }
+    
+    .typing-indicator span:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+    
+    .typing-indicator span:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+    
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
+    }
+    
+    .slide-in {
+      animation: slideIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+    }
+    
+    @keyframes slideIn {
+      from { transform: translateY(10px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: #1E1E1E;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: #3C3F41;
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: #4D6BFF;
+    }
+    
+    textarea:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(77, 107, 255, 0.3);
+    }
+    
+    .new-chat-btn {
+      background: linear-gradient(135deg, #4D6BFF 0%, #4D8BFF 100%);
+      box-shadow: 0 4px 15px rgba(77, 107, 255, 0.3);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .new-chat-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(77, 107, 255, 0.4);
+    }
+    
+    .new-chat-btn::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(
+        to bottom right,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.1) 50%,
+        rgba(255, 255, 255, 0) 100%
+      );
+      transform: rotate(30deg);
+      transition: all 0.3s ease;
+    }
+    
+    .new-chat-btn:hover::before {
+      left: 100%;
+      top: 100%;
+    }
+    
+    .wave-decoration {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 100px;
+      background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none"><path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" opacity=".25" fill="%234D6BFF"/><path d="M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,60.65-49.24V0Z" opacity=".5" fill="%234D6BFF"/><path d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z" fill="%234D6BFF"/></svg>');
+      background-size: cover;
+      background-repeat: no-repeat;
+      opacity: 0.1;
+    }
+    
+    .code-bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(77, 107, 255, 0.03) 0%, transparent 20%),
+        radial-gradient(circle at 90% 80%, rgba(77, 255, 223, 0.03) 0%, transparent 20%);
+      pointer-events: none;
+    }
+    
+    .message-code {
+      background: rgba(30, 30, 30, 0.7);
+      border: 1px solid rgba(77, 107, 255, 0.2);
+      border-radius: 4px;
+      padding: 8px 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9em;
+      margin: 8px 0;
+      overflow-x: auto;
+      white-space: pre-wrap;
+    }
+    
+    .message-code::before {
+      content: '>';
+      color: #4DFFDF;
+      margin-right: 8px;
+    }
+  </style>
+</head>
+<body class="gradient-bg h-screen flex">
+  <div class="code-bg"></div>
+  
+  <!-- Sidebar -->
+  <div class="w-64 bg-jetbrains-darker border-r border-jetbrains-border flex flex-col h-full relative z-10">
+    <div class="p-4 border-b border-jetbrains-border">
+      <button onclick="newChat()" class="new-chat-btn w-full flex items-center justify-center gap-2 text-white py-3 px-4 rounded-lg transition-all duration-300">
+        <i class="fas fa-plus text-lg"></i>
+        <span class="font-medium">New Chat</span>
+      </button>
+    </div>
+    <div class="flex-1 overflow-y-auto" id="chatList">
+      <!-- Chat history will appear here -->
+      <div class="text-center text-jetbrains-text p-4">No chats yet</div>
+    </div>
+    <div class="wave-decoration"></div>
+    <div class="p-4 border-t border-jetbrains-border flex items-center gap-3 bg-jetbrains-darker z-10">
+      <div class="w-8 h-8 rounded-full bg-gradient-to-br from-jetbrains-primary to-jetbrains-neon flex items-center justify-center text-white neon-glow">
+        <i class="fas fa-user"></i>
+      </div>
+      <span class="text-jetbrains-lighttext">User</span>
+    </div>
+  </div>
+
+  <!-- Main Chat Area -->
+  <div class="flex-1 flex flex-col h-full relative overflow-hidden">
+    
+    <!-- Chat Header -->
+    <div class="p-4 border-b border-jetbrains-border flex items-center justify-between bg-jetbrains-darker z-10">
+      <h1 class="text-lg font-medium text-jetbrains-lighttext neon-text" id="chatTitle">New Chat</h1>
+      <div class="flex gap-2">
+        <button onclick="deleteCurrentChat()" class="p-2 text-jetbrains-text hover:text-jetbrains-accent rounded hover:bg-jetbrains-highlight transition">
+          <i class="fas fa-trash"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Messages Container -->
+    <div class="flex-1 overflow-y-auto p-4 bg-jetbrains-dark relative z-0" id="chatWindow">
+      <div class="flex flex-col items-center justify-center h-full text-jetbrains-text">
+        <div class="relative mb-6">
+          <div class="w-24 h-24 rounded-full bg-gradient-to-br from-jetbrains-primary to-jetbrains-neon flex items-center justify-center text-white neon-glow animate-pulse-slow">
+            <i class="fas fa-comments text-3xl"></i>
+          </div>
+          <div class="absolute -inset-2 rounded-full bg-gradient-to-br from-jetbrains-primary to-jetbrains-neon opacity-20 blur-md animate-pulse"></div>
+        </div>
+        <p class="text-lg mb-2">Cuppy AI Assistant</p>
+        <p class="text-sm opacity-70">Start a new conversation to begin</p>
+      </div>
+    </div>
+
+    <!-- Input Area -->
+    <div class="p-4 border-t border-jetbrains-border bg-jetbrains-darker z-10">
+      <div class="relative">
+        <textarea 
+          id="msg" 
+          placeholder="Ask me anything about coding..." 
+          rows="1"
+          class="w-full p-3 pr-12 bg-jetbrains-darkest border border-jetbrains-border text-jetbrains-lighttext rounded-lg transition resize-none focus:border-jetbrains-primary"
+          onkeydown="handleKeyDown(event)"
+        ></textarea>
+        <button 
+          onclick="sendMessage()" 
+          id="sendButton"
+          class="absolute right-3 bottom-3 p-2 text-jetbrains-primary hover:text-jetbrains-neon disabled:text-jetbrains-border transition-colors"
+          disabled
+        >
+          <i class="fas fa-paper-plane text-lg"></i>
+        </button>
+      </div>
+      <p class="text-xs text-jetbrains-text mt-2 opacity-70">AI may produce inaccurate information about people, places, or facts.</p>
+    </div>
+  </div>
+
+  <script>
+    let chats = [];
+    let currentChatId = null;
+    let isWaitingForResponse = false;
+
+    // Initialize the app
+    document.addEventListener('DOMContentLoaded', () => {
+      loadChats();
+      setupTextareaAutoResize();
+      
+      // Add some example code to the empty state
+      const chatWindow = document.getElementById('chatWindow');
+      if (chatWindow) {
+        const exampleCode = `// Example Kotlin code
+fun main() {
+    val message = "Hello, JetBrains!"
+    println(message)
+    
+    // Calculate factorial
+    fun factorial(n: Int): Int {
+        return if (n <= 1) 1 else n * factorial(n - 1)
+    }
+    
+    println("Factorial of 5 is: \${factorial(5)}")
+}`;
+        
+        const codeElement = document.createElement('div');
+        codeElement.className = 'message-code';
+        codeElement.textContent = exampleCode;
+        
+        const emptyState = chatWindow.querySelector('.flex.flex-col.items-center.justify-center');
+        if (emptyState) {
+          emptyState.appendChild(codeElement);
+        }
+      }
+    });
+
+    // Auto-resize textarea
+    function setupTextareaAutoResize() {
+      const textarea = document.getElementById('msg');
+      textarea.addEventListener('input', () => {
+        textarea.style.height = 'auto';
+        textarea.style.height = (textarea.scrollHeight) + 'px';
+        
+        // Enable/disable send button
+        document.getElementById('sendButton').disabled = textarea.value.trim() === '';
+      });
+    }
+
+    // Handle Enter key press
+    function handleKeyDown(event) {
+      if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        if (!isWaitingForResponse) {
+          sendMessage();
+        }
+      }
+    }
+
+    // Create a new chat
+    async function newChat() {
+      try {
+        // Add animation effect to the button
+        const btn = document.querySelector('.new-chat-btn');
+        if (btn) {
+          btn.classList.add('animate-pulse');
+          setTimeout(() => btn.classList.remove('animate-pulse'), 500);
+        }
+        
+        const res = await fetch('http://localhost:3001/api/new-chat', { 
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!res.ok) throw new Error('Failed to create chat');
+        
+        const data = await res.json();
+        const chatId = data.chatId;
+        
+        const chat = {
+          id: chatId,
+          title: `Chat ${chats.length + 1}`,
+          messages: [],
+          createdAt: new Date().toISOString()
+        };
+        
+        chats.unshift(chat);
+        currentChatId = chatId;
+        
+        saveChats();
+        renderChatList();
+        renderChatWindow();
+        
+        document.getElementById('msg').focus();
+      } catch (error) {
+        console.error('Error creating new chat:', error);
+        // Show error with animation
+        const errorElement = document.createElement('div');
+        errorElement.className = 'fixed top-4 right-4 bg-jetbrains-accent text-white px-4 py-2 rounded-lg shadow-lg animate-slideInRight';
+        errorElement.textContent = 'Failed to create a new chat. Please try again.';
+        document.body.appendChild(errorElement);
+        
+        setTimeout(() => {
+          errorElement.classList.add('animate-slideOutRight');
+          setTimeout(() => errorElement.remove(), 500);
+        }, 3000);
+      }
+    }
+
+    // Send a message
+    async function sendMessage() {
+      const messageInput = document.getElementById('msg');
+      const message = messageInput.value.trim();
+      
+      if (!message || !currentChatId || isWaitingForResponse) return;
+      
+      // Add user message to chat
+      const currentChat = chats.find(chat => chat.id === currentChatId);
+      if (!currentChat) return;
+      
+      currentChat.messages.push({
+        sender: 'user',
+        content: message,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Update UI
+      renderChatWindow();
+      messageInput.value = '';
+      messageInput.style.height = 'auto';
+      document.getElementById('sendButton').disabled = true;
+      isWaitingForResponse = true;
+      
+      // Animate send button
+      const sendBtn = document.getElementById('sendButton');
+      sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+      
+      // Show typing indicator
+      showTypingIndicator();
+      
+      try {
+        const res = await fetch(`http://localhost:3001/api/chat/${currentChatId}/message`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json' 
+          },
+          body: JSON.stringify({ message })
+        });
+        
+        if (!res.ok) throw new Error('Failed to get response');
+        
+        const data = await res.json();
+        
+        // Add AI response to chat
+        currentChat.messages.push({
+          sender: 'ai',
+          content: data.response,
+          timestamp: new Date().toISOString()
+        });
+        
+        // Update chat title if it's the first AI response
+        if (currentChat.messages.length === 2) {
+          currentChat.title = message.length > 30 
+            ? `${message.substring(0, 30)}...` 
+            : message;
+        }
+        
+        saveChats();
+        renderChatList();
+      } catch (error) {
+        console.error('Error sending message:', error);
+        currentChat.messages.push({
+          sender: 'ai',
+          content: "Sorry, I encountered an error. Please try again.",
+          timestamp: new Date().toISOString()
+        });
+      } finally {
+        isWaitingForResponse = false;
+        hideTypingIndicator();
+        renderChatWindow();
+        sendBtn.innerHTML = '<i class="fas fa-paper-plane text-lg"></i>';
+      }
+    }
+
+    // Show typing indicator
+    function showTypingIndicator() {
+      const chatWindow = document.getElementById('chatWindow');
+      const typingDiv = document.createElement('div');
+      typingDiv.className = 'flex mb-4 slide-in';
+      typingDiv.innerHTML = `
+        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-jetbrains-primary to-jetbrains-neon flex items-center justify-center mr-2 neon-glow min-w-[2rem]">
+          <i class="fas fa-robot text-white"></i>
+        </div>
+        <div class="typing-indicator flex items-center bg-jetbrains-highlight px-4 py-2 rounded-lg neon-border">
+          <span>.</span>
+          <span>.</span>
+          <span>.</span>
+        </div>
+      `;
+      chatWindow.appendChild(typingDiv);
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    // Hide typing indicator
+    function hideTypingIndicator() {
+      const typingIndicators = document.querySelectorAll('.typing-indicator');
+      typingIndicators.forEach(indicator => indicator.remove());
+    }
+
+    // Load chat history
+    function loadChats() {
+      const savedChats = localStorage.getItem('jetbrains-chats');
+      if (savedChats) {
+        chats = JSON.parse(savedChats);
+        if (chats.length > 0) {
+          currentChatId = chats[0].id;
+          renderChatList();
+          renderChatWindow();
+        }
+      }
+    }
+
+    // Save chat history
+    function saveChats() {
+      localStorage.setItem('jetbrains-chats', JSON.stringify(chats));
+    }
+
+    // Render chat list in sidebar
+    function renderChatList() {
+      const chatList = document.getElementById('chatList');
+      
+      if (chats.length === 0) {
+        chatList.innerHTML = `
+          <div class="flex flex-col items-center justify-center h-64 text-jetbrains-text">
+            <i class="fas fa-comment-dots text-3xl mb-3 text-jetbrains-secondary"></i>
+            <p>No chats yet</p>
+          </div>
+        `;
+        return;
+      }
+      
+      chatList.innerHTML = chats.map(chat => `
+        <div 
+          onclick="switchChat('${chat.id}')" 
+          class="chat-list-item p-3 hover:bg-jetbrains-highlight cursor-pointer flex items-center gap-3 transition-all ${chat.id === currentChatId ? 'active' : ''}"
+        >
+          <div class="w-8 h-8 rounded-full flex items-center justify-center ${chat.id === currentChatId ? 'bg-gradient-to-br from-jetbrains-primary to-jetbrains-neon text-white' : 'bg-jetbrains-highlight text-jetbrains-secondary'}">
+            <i class="fas fa-comment"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="font-medium text-jetbrains-lighttext truncate">${chat.title}</p>
+            <p class="text-xs text-jetbrains-text truncate">
+              ${chat.messages.length > 0 ? 
+                chat.messages[chat.messages.length - 1].content.substring(0, 30) + 
+                (chat.messages[chat.messages.length - 1].content.length > 30 ? '...' : '') : 
+                'New chat'}
+            </p>
+          </div>
+          ${chat.id === currentChatId ? '<div class="w-2 h-2 rounded-full bg-jetbrains-neon animate-pulse"></div>' : ''}
+        </div>
+      `).join('');
+    }
+
+    // Switch between chats
+    function switchChat(chatId) {
+      currentChatId = chatId;
+      renderChatList();
+      renderChatWindow();
+      document.getElementById('msg').focus();
+    }
+
+    // Render chat messages
+    function renderChatWindow() {
+      const chatWindow = document.getElementById('chatWindow');
+      const currentChat = chats.find(chat => chat.id === currentChatId);
+      
+      if (!currentChat) {
+        chatWindow.innerHTML = `
+          <div class="flex flex-col items-center justify-center h-full text-jetbrains-text">
+            <div class="relative mb-6">
+              <div class="w-24 h-24 rounded-full bg-gradient-to-br from-jetbrains-primary to-jetbrains-neon flex items-center justify-center text-white neon-glow animate-pulse-slow">
+                <i class="fas fa-comments text-3xl"></i>
+              </div>
+              <div class="absolute -inset-2 rounded-full bg-gradient-to-br from-jetbrains-primary to-jetbrains-neon opacity-20 blur-md animate-pulse"></div>
+            </div>
+            <p class="text-lg mb-2">Cuppy AI Assistant</p>
+            <p class="text-sm opacity-70">Start a new conversation to begin</p>
+            <div class="message-code mt-4">
+              // Example Kotlin code
+              fun main() {
+                  println("Hello, Cuppy!")
+              }
+            </div>
+          </div>
+        `;
+        document.getElementById('chatTitle').textContent = 'New Chat';
+        return;
+      }
+      
+      document.getElementById('chatTitle').textContent = currentChat.title;
+      
+      if (currentChat.messages.length === 0) {
+        chatWindow.innerHTML = `
+          <div class="flex flex-col items-center justify-center h-full text-jetbrains-text">
+            <div class="w-16 h-16 rounded-full bg-gradient-to-br from-jetbrains-primary to-jetbrains-neon flex items-center justify-center text-white neon-glow mb-4">
+              <i class="fas fa-comment text-xl"></i>
+            </div>
+            <p>Send a message to start chatting</p>
+          </div>
+        `;
+        return;
+      }
+      
+      chatWindow.innerHTML = currentChat.messages.map(message => `
+        <div class="mb-4 slide-in">
+          <div class="flex ${message.sender === 'user' ? 'justify-end' : ''}">
+            <div class="flex max-w-4xl ${message.sender === 'user' ? 'flex-row-reverse' : ''}">
+              <div class="w-8 h-8 rounded-full ${message.sender === 'user' ? 'bg-gradient-to-br from-jetbrains-primary to-jetbrains-wave' : 'bg-gradient-to-br from-jetbrains-highlight to-jetbrains-dark min-w-[2rem]'} flex items-center justify-center ${message.sender === 'user' ? 'text-white' : 'text-jetbrains-secondary'} mr-2 ml-2 neon-glow">
+                ${message.sender === 'user' ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>'}
+              </div>
+              <div class="${message.sender === 'user' ? 'chat-message-user' : 'chat-message-ai'} px-4 py-2">
+                ${formatMessageContent(message.content)}
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+      
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+    
+    function escapeHTML(str) {
+    return str.replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+    }
+
+    function formatMessageContent(content) {
+    return content.replace(/```([\s\S]*?)```/g, (_, code) => {
+        return `<div class="message-code">${escapeHTML(code)}</div>`;
+    }).replace(/\n/g, '<br>');
+    }
+
+
+    // Delete current chat
+    function deleteCurrentChat() {
+      if (!currentChatId) return;
+      
+      if (confirm('Are you sure you want to delete this chat?')) {
+        chats = chats.filter(chat => chat.id !== currentChatId);
+        
+        if (chats.length > 0) {
+          currentChatId = chats[0].id;
+        } else {
+          currentChatId = null;
+        }
+        
+        saveChats();
+        renderChatList();
+        renderChatWindow();
+      }
+    }
+  </script>
+</body>
+</html>
