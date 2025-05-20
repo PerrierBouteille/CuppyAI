@@ -299,32 +299,6 @@
     document.addEventListener('DOMContentLoaded', () => {
       loadChats();
       setupTextareaAutoResize();
-      
-      // Add some example code to the empty state
-      const chatWindow = document.getElementById('chatWindow');
-      if (chatWindow) {
-        const exampleCode = `// Example Kotlin code
-fun main() {
-    val message = "Hello, JetBrains!"
-    println(message)
-    
-    // Calculate factorial
-    fun factorial(n: Int): Int {
-        return if (n <= 1) 1 else n * factorial(n - 1)
-    }
-    
-    println("Factorial of 5 is: \${factorial(5)}")
-}`;
-        
-        const codeElement = document.createElement('div');
-        codeElement.className = 'message-code';
-        codeElement.textContent = exampleCode;
-        
-        const emptyState = chatWindow.querySelector('.flex.flex-col.items-center.justify-center');
-        if (emptyState) {
-          emptyState.appendChild(codeElement);
-        }
-      }
     });
 
     // Auto-resize textarea
@@ -579,12 +553,6 @@ fun main() {
             </div>
             <p class="text-lg mb-2">Cuppy AI Assistant</p>
             <p class="text-sm opacity-70">Start a new conversation to begin</p>
-            <div class="message-code mt-4">
-              // Example Kotlin code
-              fun main() {
-                  println("Hello, Cuppy!")
-              }
-            </div>
           </div>
         `;
         document.getElementById('chatTitle').textContent = 'New Chat';
