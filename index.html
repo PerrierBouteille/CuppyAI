@@ -208,15 +208,11 @@
       padding: 8px 12px;
       font-family: 'JetBrains Mono', monospace;
       font-size: 0.9em;
-      margin: 8px 0;
-      overflow-x: auto;
-      white-space: pre-wrap;
     }
     
-    .message-code::before {
-      content: '>';
+    .arrow-code{
       color: #4DFFDF;
-      margin-right: 8px;
+      padding-left: 8px;
     }
   </style>
 </head>
@@ -628,17 +624,46 @@ fun main() {
     }
     
     function escapeHTML(str) {
-    return str.replace(/&/g, "&amp;")
+      return str.replace(/&/g, "&amp;")
                 .replace(/</g, "&lt;")
                 .replace(/>/g, "&gt;");
     }
 
     function formatMessageContent(content) {
-    return content.replace(/```([\s\S]*?)```/g, (_, code) => {
-        return `<div class="message-code">${escapeHTML(code)}</div>`;
-    }).replace(/\n/g, '<br>');
+      // Split text by code blocks first
+      const parts = content.split(/```([\s\S]*?)```/g);
+
+      // Iterate over the chunks: even indexes are normal text, odd ones are code
+      return parts.map((part, i) => {
+        if (i % 2 === 0) {
+          // Normal text: escape + convert newlines to <br>
+          return escapeHTML(part).replace(/\n/g, '<br>');
+        } else {
+          // Code block: preserve line breaks via <pre><code>
+          const escaped = escapeHTML(part);
+          return `
+            <div class="relative group my-2">
+              <pre class="message-code bg-gray-800"><code>${escaped}</code></pre>
+              <div class="arrow-code absolute -top-px bg-gray-700 rounded w-full">> Code</div>
+              <button class="copy-btn absolute top-1 right-2 bg-gray-600 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition" onclick="copyCode(this)">Copy</button>
+            </div>
+          `;
+        }
+      }).join('');
     }
 
+
+    function copyCode(button) {
+      const code = button.parentElement.querySelector('code').innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        button.textContent = 'Copied!';
+        setTimeout(() => {
+          button.textContent = 'Copy';
+        }, 1500);
+      }).catch(err => {
+        console.error('Copy failed:', err);
+      });
+    }
 
     // Delete current chat
     function deleteCurrentChat() {
