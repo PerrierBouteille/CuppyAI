@@ -1,4 +1,4 @@
-# CuppyAI
+# CuppyLLM
 
 [![Node.js](https://img.shields.io/badge/Node.js-v23-green)](https://nodejs.org/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-v7-brightgreen)](https://www.mongodb.com/)
@@ -7,7 +7,7 @@
 
 ---
 
-CuppyAI is a lightweight AI chat web app powered by Ollama and Node.js, with persistent chat storage using MongoDB. It supports multiple chat sessions and formatted code block responses.
+CuppyLLM is a lightweight AI chat web app powered by Ollama and Node.js, with persistent chat storage using MongoDB. It supports multiple chat sessions and formatted code block responses.
 
 ---
 
