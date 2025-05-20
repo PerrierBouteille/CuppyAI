@@ -636,9 +636,6 @@
     // Delete current chat
     async function deleteCurrentChat() {
       if (!currentChatId) return;
-
-      console.log(currentChatId);
-      console.log(chats);
       
       if (confirm('Are you sure you want to delete this chat?')) {
         chats = chats.filter(chat => chat.id !== currentChatId);
