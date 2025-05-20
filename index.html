@@ -666,18 +666,18 @@ fun main() {
     }
 
     // Delete current chat
-    function deleteCurrentChat() {
+    async function deleteCurrentChat() {
       if (!currentChatId) return;
+
+      console.log(currentChatId);
+      console.log(chats);
       
       if (confirm('Are you sure you want to delete this chat?')) {
         chats = chats.filter(chat => chat.id !== currentChatId);
         
-        if (chats.length > 0) {
-          currentChatId = chats[0].id;
-        } else {
-          currentChatId = null;
-        }
-        
+        const res = await fetch(`http://localhost:3001/api/chat/${currentChatId}/delete`, {
+          method: 'POST'
+        });
         saveChats();
         renderChatList();
         renderChatWindow();

@@ -70,4 +70,18 @@ app.post('/api/chat/:chatId/message', async (req, res) => {
     res.json({ response: ollamaData.message.content });
 });
 
+// Delete chat
+app.post('/api/chat/:chatId/delete', async (req, res) => {
+  try {
+    const chat = await Chat.findByIdAndDelete(req.params.chatId);
+    if (!chat) return res.status(404).send('Chat not found');
+    chat.deleteOne();
+    res.sendStatus(204);
+  } catch (error) {
+    console.error('Error deleting chat:', error);
+    res.status(500).json({ error: 'Failed to delete chat' });
+  }
+});
+
+
 app.listen(PORT, () => console.log(`Server on ${PORT}`));
